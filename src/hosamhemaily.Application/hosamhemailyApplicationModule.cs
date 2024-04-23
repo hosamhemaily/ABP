@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using Volo.Abp.Account;
+using Volo.Abp.Auditing;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.FeatureManagement;
@@ -31,7 +32,12 @@ public class hosamhemailyApplicationModule : AbpModule
             options.AddMaps<hosamhemailyApplicationModule>();
         });
 
-       // context.Services.AddScoped<IRepository<TodoItem, Guid>, RepositoryBase<TodoItem, Guid>>();
+        //Configure<AbpAuditingOptions>(options =>
+        //{
+        //    options.IsEnabled = true; //Disables the auditing system
+        //});
+
+        // context.Services.AddScoped<IRepository<TodoItem, Guid>, RepositoryBase<TodoItem, Guid>>();
 
 
     }

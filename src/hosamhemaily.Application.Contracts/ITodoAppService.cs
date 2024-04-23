@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DTO;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,11 +12,9 @@ namespace hosamhemaily
         Task<List<TodoItemDto>> GetListAsync();
         Task<TodoItemDto> CreateAync(string text);
         Task DeleteAync(int id);
+
+        Task LinkCustomertoTodoItem(CustomertoTodoItemDTO dTO);
     }
 
-    public class TodoItemDto
-    {
-        public Guid Id { get; set; }
-        public string Text { get; set; }
-    }
+   
 }

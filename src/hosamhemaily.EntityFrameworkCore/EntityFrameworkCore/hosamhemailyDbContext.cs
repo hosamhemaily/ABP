@@ -27,6 +27,7 @@ public class hosamhemailyDbContext :
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
     public DbSet<TodoItem> TodoItems { get; set; }
+    public DbSet<Customer> Customers { get; set; }
 
     #region Entities from the modules
 
@@ -79,11 +80,15 @@ public class hosamhemailyDbContext :
 
         /* Configure your own tables/entities inside here */
 
-        //builder.Entity<TodoItem>(b =>
-        //{
-        //    b.ToTable(hosamhemailyConsts.DbTablePrefix + "todoitems", hosamhemailyConsts.DbSchema);
-        //    b.ConfigureByConvention(); //auto configure for the base class props
-        //    //...
+        //builder.Entity<TodoAddress>(b =>
+        //{            
+        //    b.HasNoKey();
         //});
+        
+        builder.Entity<TodoItem>(b =>
+        {            
+            b.OwnsOne(t=>t.Address).OwnsOne(x=>x.CityId);            
+        });
+       
     }
 }

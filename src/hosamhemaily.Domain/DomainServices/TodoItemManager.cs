@@ -17,10 +17,10 @@ namespace hosamhemaily.DomainServices
             _todorepository=todorepository;
             _customerrepository=customerrepository;
         }
-        public async Task CanLinkCustomertoitem(TodoItem item,Customer customer)
+        public async Task CanLinkCustomertoitem(Guid item,int customer)
         {
-            var resulttodoitem = await _todorepository.GetAsync(x=>x.Id==item.Id);
-            var resultcustomer = await _customerrepository.GetAsync(x=>x.Id == customer.Id);
+            var resulttodoitem = await _todorepository.GetAsync(x=>x.Id==item);
+            var resultcustomer = await _customerrepository.GetAsync(x=>x.Id == customer);
             if (resulttodoitem.IsActive) { }
         }
     }
