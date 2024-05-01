@@ -29,6 +29,14 @@ using Volo.Abp.Security.Claims;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.UI.Navigation.Urls;
 using Volo.Abp.VirtualFileSystem;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
+using Autofac.Core;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace hosamhemaily;
 
@@ -47,15 +55,15 @@ public class hosamhemailyHttpApiHostModule : AbpModule
 {
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
-        PreConfigure<OpenIddictBuilder>(builder =>
-        {
-            builder.AddValidation(options =>
-            {
-                options.AddAudiences("hosamhemaily");
-                options.UseLocalServer();
-                options.UseAspNetCore();
-            });
-        });
+        //PreConfigure<OpenIddictBuilder>(builder =>
+        //{
+        //    builder.AddValidation(options =>
+        //    {
+        //        options.AddAudiences("hosamhemaily");
+        //        options.UseLocalServer();
+        //        options.UseAspNetCore();
+        //    });
+        //});
     }
 
     public override void ConfigureServices(ServiceConfigurationContext context)
@@ -63,7 +71,8 @@ public class hosamhemailyHttpApiHostModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
-        ConfigureAuthentication(context);
+        ConfigureAuthentication(context, configuration);
+
         ConfigureBundles();
         ConfigureUrls(configuration);
         ConfigureConventionalControllers();
@@ -72,13 +81,60 @@ public class hosamhemailyHttpApiHostModule : AbpModule
         ConfigureSwaggerServices(context, configuration);
     }
 
-    private void ConfigureAuthentication(ServiceConfigurationContext context)
+    private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
     {
-        context.Services.ForwardIdentityAuthenticationForBearer(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
-        context.Services.Configure<AbpClaimsPrincipalFactoryOptions>(options =>
+        //context.Services.ForwardIdentityAuthenticationForBearer(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
+
+        // Configure basic authentication
+        context.Services.AddAuthentication("BasicAuth")
+            .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null);
+
+
+        // Add JWT bearer authentication
+        context.Services.AddAuthentication(opt =>
         {
-            options.IsDynamicClaimsEnabled = true;
-        });
+            opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            opt.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            
+        })
+            .AddJwtBearer(options =>
+            {
+                options.Audience = configuration["Jwt:audience"];
+                options.RequireHttpsMetadata = false;
+                options.IncludeErrorDetails = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = false,
+                    
+                    ValidIssuer = configuration["Jwt:Issuer"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"])),
+                    ClockSkew = TimeSpan.Zero
+
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = context =>
+                    {
+                        context.HandleResponse();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        context.Response.ContentType = "application/json";
+
+                        // Add additional error details to the response
+                        var result = JsonConvert.SerializeObject(new { error = "Unauthorized", reason = context.ErrorDescription });
+                        return context.Response.WriteAsync(result);
+                    }
+                };
+
+            });
+        //context.Services.Configure<AbpClaimsPrincipalFactoryOptions>(options =>
+        //{
+        //    options.IsDynamicClaimsEnabled = true;
+        //});
     }
 
     private void ConfigureBundles()
@@ -141,15 +197,43 @@ public class hosamhemailyHttpApiHostModule : AbpModule
 
     private static void ConfigureSwaggerServices(ServiceConfigurationContext context, IConfiguration configuration)
     {
-        context.Services.AddAbpSwaggerGenWithOAuth(
-            configuration["AuthServer:Authority"]!,
-            new Dictionary<string, string>
-            {
-                    {"hosamhemaily", "hosamhemaily API"}
-            },
+
+
+        context.Services.AddAbpSwaggerGen(
+            //configuration["AuthServer:Authority"]!,
+            //new Dictionary<string, string>
+            //{
+            //        {"hosamhemaily", "hosamhemaily API"}
+            //},
             options =>
             {
+                
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "hosamhemaily API", Version = "v1" });
+                // Configure JWT Bearer authentication
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    
+                    In = ParameterLocation.Header,
+                    Name= "Authorization",
+                    Description = "JWT Authorization header using the Bearer scheme"
+
+                });
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new string[] { }
+                }
+        }
+        );
                 options.DocInclusionPredicate((docName, description) => true);
                 options.CustomSchemaIds(type => type.FullName);
             });
@@ -197,24 +281,25 @@ public class hosamhemailyHttpApiHostModule : AbpModule
         app.UseRouting();
         app.UseCors();
         app.UseAuthentication();
-        app.UseAbpOpenIddictValidation();
+        //app.UseAbpOpenIddictValidation();
 
-        if (MultiTenancyConsts.IsEnabled)
-        {
-            app.UseMultiTenancy();
-        }
+        //if (MultiTenancyConsts.IsEnabled)
+        //{
+        //    app.UseMultiTenancy();
+        //}
         app.UseUnitOfWork();
-        app.UseDynamicClaims();
+        //app.UseDynamicClaims();
         app.UseAuthorization();
 
         app.UseSwagger();
         app.UseAbpSwaggerUI(c =>
         {
+            
             c.SwaggerEndpoint("/swagger/v1/swagger.json", "hosamhemaily API");
 
-            var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
-            c.OAuthClientId(configuration["AuthServer:SwaggerClientId"]);
-            c.OAuthScopes("hosamhemaily");
+            //var configuration = context.ServiceProvider.GetRequiredService<IConfiguration>();
+            //c.OAuthClientId(configuration["AuthServer:SwaggerClientId"]);
+            //c.OAuthScopes("hosamhemaily");
         });
 
         app.UseAuditing();

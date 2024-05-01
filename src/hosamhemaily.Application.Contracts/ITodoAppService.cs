@@ -13,7 +13,7 @@ namespace hosamhemaily
         Task<TodoItemDto> CreateAync(string text);
         Task DeleteAync(int id);
 
-        Task LinkCustomertoTodoItem(CustomertoTodoItemDTO dTO);
+        Task<bool> LinkCustomertoTodoItem(CustomertoTodoItemDTO dTO);
     }
 
    

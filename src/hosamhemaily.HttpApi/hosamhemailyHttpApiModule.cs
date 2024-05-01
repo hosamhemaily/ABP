@@ -8,6 +8,8 @@ using Volo.Abp.Modularity;
 using Volo.Abp.PermissionManagement.HttpApi;
 using Volo.Abp.SettingManagement;
 using Volo.Abp.TenantManagement;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace hosamhemaily;
 
@@ -26,6 +28,22 @@ public class hosamhemailyHttpApiModule : AbpModule
     {
         ConfigureLocalization();
     }
+
+    //public override void PreConfigureServices(ServiceConfigurationContext context)
+    //{
+    //    var configuration = context.Services.GetConfiguration();
+
+    //    context.Services.AddAuthentication("Bearer")
+    //        .AddJwtBearer("Bearer", options =>
+    //        {
+    //            options.Authority = configuration["AuthServer:Authority"];
+    //            options.RequireHttpsMetadata = false; // For development only
+    //            options.TokenValidationParameters = new TokenValidationParameters
+    //            {
+    //                ValidateAudience = false
+    //            };
+    //        });
+    //}
 
     private void ConfigureLocalization()
     {

@@ -1,5 +1,7 @@
 ﻿using DTO;
 using hosamhemaily.DomainServices;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +27,7 @@ namespace hosamhemaily
             _todoItemManager = todoItemManager;
             _auditingManager = auditingManager;
 
+
         }
         public async Task<TodoItemDto> CreateAync(string text)
         {
@@ -43,11 +46,14 @@ namespace hosamhemaily
             return result.Select(x=>new TodoItemDto {Id=x.Id,Text=x.MyText }).ToList();
         }
 
-        public async Task LinkCustomertoTodoItem(CustomertoTodoItemDTO dTO)
+        [Authorize(AuthenticationSchemes = "BasicAuth")]
+        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<bool> LinkCustomertoTodoItem(CustomertoTodoItemDTO dTO)
         {
             var currentAuditLogScope = _auditingManager.Current;
             currentAuditLogScope.Log.Comments.Add("Execute LinkCustomertoTodoItem");
             await _todoItemManager.CanLinkCustomertoitem(dTO.TodoItem, dTO.CustomerID);
+            return true;
         }
 
         public async Task<List<TodoItemDto>> Update()
