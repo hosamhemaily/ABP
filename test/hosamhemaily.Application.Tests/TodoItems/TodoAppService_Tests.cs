@@ -27,7 +27,7 @@ namespace hosamhemaily.TodoItems
 
             //Assert
             result.Count.ShouldBeGreaterThan(0);
-            result.ShouldContain(b => b.Text == "1984");
+            result.ShouldContain(b => b.Text == "First Do Item");
         }
     }
 }

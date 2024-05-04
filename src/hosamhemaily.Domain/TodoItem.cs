@@ -11,6 +11,6 @@ namespace hosamhemaily
     {
         public string MyText { get; set; }
         public bool IsActive { get; set; }
-        public TodoAddress Address { get; set; }
+        public TodoAddress? Address { get; set; }
     }
 }

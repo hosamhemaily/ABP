@@ -12,6 +12,7 @@ using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
+using hosamhemaily.Repositorys;
 
 namespace hosamhemaily.EntityFrameworkCore;
 
@@ -49,6 +50,7 @@ public class hosamhemailyEntityFrameworkCoreModule : AbpModule
                  * See also hosamhemailyMigrationsDbContextFactory for EF Core tooling. */
             options.UseSqlServer();
         });
+        context.Services.AddScoped<ITodoRepository, TodoRepository>();
 
     }
 }

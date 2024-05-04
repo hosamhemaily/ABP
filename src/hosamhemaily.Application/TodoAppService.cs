@@ -1,5 +1,6 @@
 ﻿using DTO;
 using hosamhemaily.DomainServices;
+using hosamhemaily.Repositorys;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using System;
@@ -17,16 +18,17 @@ namespace hosamhemaily
     public class TodoAppService : ApplicationService, ITodoAppService
     {
         private readonly IRepository<TodoItem, Guid> _todoItemRepository;
+        private readonly ITodoRepository _todoRepository;
         private readonly TodoItemManager _todoItemManager;
         private readonly IAuditingManager _auditingManager;
 
         public TodoAppService(IRepository<TodoItem, Guid> todoItemRepository,TodoItemManager todoItemManager, 
-            IAuditingManager auditingManager)
+            IAuditingManager auditingManager, ITodoRepository todoRepository)
         {
             _todoItemRepository = todoItemRepository;
             _todoItemManager = todoItemManager;
             _auditingManager = auditingManager;
-
+            _todoRepository=todoRepository;
 
         }
         public async Task<TodoItemDto> CreateAync(string text)
@@ -44,6 +46,11 @@ namespace hosamhemaily
         {
             var result = await _todoItemRepository.GetListAsync();
             return result.Select(x=>new TodoItemDto {Id=x.Id,Text=x.MyText }).ToList();
+        }
+        public async Task<TodoItemDto> GetByAddressAsync()
+        {
+            var result = await _todoRepository.FindByAddressAsyns("Ali Basha");
+            return new TodoItemDto { Id=result.Id,Text=result.MyText};
         }
 
         [Authorize(AuthenticationSchemes = "BasicAuth")]

@@ -29,6 +29,7 @@ public class hosamhemailyTestBaseModule : AbpModule
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)
     {
+
         SeedTestData(context);
     }
 
