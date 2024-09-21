@@ -19,7 +19,7 @@ namespace hosamhemaily;
     typeof(hosamhemailyDomainModule),
     typeof(AbpAccountApplicationModule),
     typeof(hosamhemailyApplicationContractsModule),
-    typeof(AbpIdentityApplicationModule),
+    //typeof(AbpIdentityApplicationModule),
     typeof(AbpPermissionManagementApplicationModule),
     typeof(AbpTenantManagementApplicationModule),
     typeof(AbpFeatureManagementApplicationModule),

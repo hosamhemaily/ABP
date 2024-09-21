@@ -1,45 +1,32 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Text;
-//using System.Threading.Tasks;
-//using Volo.Abp.Account;
-//using Volo.Abp.AspNetCore.Mvc;
-//using Volo.Abp.Identity;
-//using Microsoft.AspNetCore.Mvc;
-//using Volo.Abp;
+﻿using DTO;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
-//namespace hosamhemaily.Controllers
-//{
-//    [RemoteService(Name = AccountRemoteServiceConsts.RemoteServiceName)]
-//    [Area(AccountRemoteServiceConsts.ModuleName)]
+namespace hosamhemaily.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AccountController : ControllerBase
+    {
+        private readonly IUserManagerAppService _tokenService;
 
-//    [Route("api/account")]
-//    public class AccountController : AbpControllerBase, IAccountAppService
-//    //{
+        public AccountController(IUserManagerAppService tokenService)
+        {
+            _tokenService = tokenService;
+        }
 
-//        public Task<IdentityUserDto> LoginAsync(RegisterDto input)
-//        {
-//            throw new NotImplementedException();
-//        }
-//        public Task<IdentityUserDto> RegisterAsync(RegisterDto input)
-//        {
-//            throw new NotImplementedException();
-//        }
+        // POST: api/account/login
+        [HttpPost("logincustom")]
+        public async Task<IActionResult> LoginCustomAsync([FromBody] LoginDTO input)
+        {
+            // Your login logic here
+            var token = await _tokenService.CreateTokenAync(input);
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized();
+            }
 
-//        public Task ResetPasswordAsync(ResetPasswordDto input)
-//        {
-//            throw new NotImplementedException();
-//        }
-
-//        public Task SendPasswordResetCodeAsync(SendPasswordResetCodeDto input)
-//        {
-//            throw new NotImplementedException();
-//        }
-
-//        public Task<bool> VerifyPasswordResetTokenAsync(VerifyPasswordResetTokenInput input)
-//        {
-//            throw new NotImplementedException();
-//        }
-//    }
-//}
+            return Ok(new { Token = token });
+        }
+    }
+}

@@ -37,6 +37,8 @@ using Newtonsoft.Json;
 using Autofac.Core;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore.Internal;
+using Volo.Abp.AspNetCore.Mvc.AntiForgery;
+using System.Threading.Tasks;
 
 namespace hosamhemaily;
 
@@ -79,62 +81,112 @@ public class hosamhemailyHttpApiHostModule : AbpModule
         ConfigureVirtualFileSystem(context);
         ConfigureCors(context, configuration);
         ConfigureSwaggerServices(context, configuration);
+        Configure<AbpAntiForgeryOptions>(options =>
+        {
+            options.AutoValidate = false; // Disables CSRF protection for APIs
+        });
     }
 
     private void ConfigureAuthentication(ServiceConfigurationContext context, IConfiguration configuration)
     {
         //context.Services.ForwardIdentityAuthenticationForBearer(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
 
-        // Configure basic authentication
-        context.Services.AddAuthentication("BasicAuth")
-            .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuth", null);
+        //// Configure basic authentication
+        //context.Services.Configure<BasicAuthSettings>(configuration.GetSection("Authentication:BasicAuth"));
+
+        //// Add your custom authentication handler
+        //context.Services.AddAuthentication("BasicAuthentication")
+        //    .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
 
 
-        // Add JWT bearer authentication
-        context.Services.AddAuthentication(opt =>
-        {
-            opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            opt.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            
-        })
-            .AddJwtBearer(options =>
-            {
-                options.Audience = configuration["Jwt:audience"];
-                options.RequireHttpsMetadata = false;
-                options.IncludeErrorDetails = true;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = false,
-                    
-                    ValidIssuer = configuration["Jwt:Issuer"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"])),
-                    ClockSkew = TimeSpan.Zero
+        //Add JWT bearer authentication
+        //context.Services.AddAuthentication(opt =>
+        //{
+        //    opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        //    opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        //    opt.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 
-                };
+        //})
+        //    .AddJwtBearer(options =>
+        //    {
+        //        options.Audience = configuration["Jwt:audience"];
+        //        options.RequireHttpsMetadata = false;
+        //        options.IncludeErrorDetails = true;
+        //        options.TokenValidationParameters = new TokenValidationParameters
+        //        {
+        //            ValidateIssuer = true,
+        //            ValidateAudience = true,
+        //            ValidateLifetime = true,
+        //            ValidateIssuerSigningKey = false,
 
-                options.Events = new JwtBearerEvents
-                {
-                    OnChallenge = context =>
-                    {
-                        context.HandleResponse();
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        context.Response.ContentType = "application/json";
+        //            ValidIssuer = configuration["Jwt:Issuer"],
+        //            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"])),
+        //            ClockSkew = TimeSpan.Zero
 
-                        // Add additional error details to the response
-                        var result = JsonConvert.SerializeObject(new { error = "Unauthorized", reason = context.ErrorDescription });
-                        return context.Response.WriteAsync(result);
-                    }
-                };
+        //        };
 
-            });
+        //        options.Events = new JwtBearerEvents
+        //        {
+        //            OnChallenge = context =>
+        //            {
+        //                context.HandleResponse();
+        //                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        //                context.Response.ContentType = "application/json";
+
+        //                // Add additional error details to the response
+        //                var result = JsonConvert.SerializeObject(new { error = "Unauthorized", reason = context.ErrorDescription });
+        //                return context.Response.WriteAsync(result);
+        //            }
+        //        };
+
+        //    });
         //context.Services.Configure<AbpClaimsPrincipalFactoryOptions>(options =>
         //{
         //    options.IsDynamicClaimsEnabled = true;
         //});
+        //context.Services.ForwardIdentityAuthenticationForBearer(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
+        //context.Services.Configure<AbpClaimsPrincipalFactoryOptions>(options =>
+        //{
+        //    options.IsDynamicClaimsEnabled = true;
+        //});
+
+        context.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            //ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "YourIssuer",
+            ValidAudience = "YourAudience",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSuperSecretKeyThatIsLongEnough12345")),
+            //ClockSkew = TimeSpan.Zero // Optional: reduce the default clock skew (5 min)
+        };
+
+        // Optional: Events to handle token validation, etc.
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                context.NoResult();
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "text/plain";
+                return context.Response.WriteAsync("Invalid token.");
+            },
+            OnTokenValidated = context =>
+            {
+                // Perform additional validation if needed
+                return Task.CompletedTask;
+            }
+        };
+    });
+
     }
 
     private void ConfigureBundles()
@@ -306,4 +358,6 @@ public class hosamhemailyHttpApiHostModule : AbpModule
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints();
     }
+
+
 }

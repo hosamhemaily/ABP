@@ -8,15 +8,21 @@ using System.Text;
 using System;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using static IdentityModel.ClaimComparer;
 
 namespace hosamhemaily
 {
     public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
         public BasicAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
-            ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock) : base(options, logger, encoder, clock)
+            ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock, IOptions<BasicAuthSettings> authSettings)
+            : base(options, logger, encoder, clock)
         {
+            _authSettings = authSettings.Value;
+
         }
+        private readonly BasicAuthSettings _authSettings;
+
 
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
@@ -34,7 +40,8 @@ namespace hosamhemaily
 
                 // Add your authentication logic here (e.g., check username and password against database)
 
-                if (username != "your-username" || password != "your-password")
+                
+                if (username != _authSettings .Username || password != _authSettings.Password)
                 {
                     return AuthenticateResult.Fail("Invalid username or password.");
                 }
