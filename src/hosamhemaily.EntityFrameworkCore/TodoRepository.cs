@@ -1,4 +1,5 @@
-﻿using hosamhemaily.EntityFrameworkCore;
+﻿using hosamhemaily.Entities;
+using hosamhemaily.EntityFrameworkCore;
 using hosamhemaily.Repositorys;
 using Microsoft.EntityFrameworkCore;
 using System;

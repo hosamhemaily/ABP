@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Entities;
 
-namespace hosamhemaily
+namespace hosamhemaily.Entities
 {
-    public class TodoItem:BasicAggregateRoot<Guid>
+    public class TodoItem : BasicAggregateRoot<Guid>
     {
         public string MyText { get; set; }
         public bool IsActive { get; set; }

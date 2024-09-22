@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Entities.Auditing;
 
-namespace hosamhemaily
+namespace hosamhemaily.Entities
 {
-    public class Customer:FullAuditedAggregateRoot<int>
+    public class Customer : FullAuditedAggregateRoot<int>
     {
         public string Name { get; set; }
     }

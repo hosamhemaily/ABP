@@ -13,6 +13,7 @@ using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
 using Volo.Abp.TenantManagement.EntityFrameworkCore;
 using hosamhemaily.Repositorys;
+using Data8.PowerPlatform.Dataverse.Client.Wsdl;
 
 namespace hosamhemaily.EntityFrameworkCore;
 
@@ -50,7 +51,10 @@ public class hosamhemailyEntityFrameworkCoreModule : AbpModule
                  * See also hosamhemailyMigrationsDbContextFactory for EF Core tooling. */
             options.UseSqlServer();
         });
+        context.Services.AddScoped(typeof(CrmServiceBase));
+
         context.Services.AddScoped<ITodoRepository, TodoRepository>();
+        context.Services.AddScoped<IPriceOfferRepository, PriceOfferRepository>();
 
     }
 }

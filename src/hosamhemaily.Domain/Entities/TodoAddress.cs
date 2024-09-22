@@ -7,7 +7,7 @@ using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Values;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace hosamhemaily
+namespace hosamhemaily.Entities
 {
     public class TodoAddress : ValueObject
     {

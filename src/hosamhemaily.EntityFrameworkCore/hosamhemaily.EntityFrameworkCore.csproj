@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\hosamhemaily.Domain\hosamhemaily.Domain.csproj" />
+    <PackageReference Include="Data8.PowerPlatform.Dataverse.Client" Version="2.4.2" />
     <PackageReference Include="Volo.Abp.EntityFrameworkCore.SqlServer" Version="8.0.5" />
     <PackageReference Include="Volo.Abp.PermissionManagement.EntityFrameworkCore" Version="8.0.5" />
     <PackageReference Include="Volo.Abp.SettingManagement.EntityFrameworkCore" Version="8.0.5" />

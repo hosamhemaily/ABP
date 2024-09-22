@@ -1,5 +1,6 @@
 ﻿using DTO;
 using hosamhemaily.DomainServices;
+using hosamhemaily.Entities;
 using hosamhemaily.Repositorys;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -13,6 +14,7 @@ using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Auditing;
 using Volo.Abp.Domain.Repositories;
@@ -35,6 +37,8 @@ namespace hosamhemaily
         private readonly IPermissionManager _permissionManager;
         private readonly ICurrentUser _currentUser;
         private readonly IdentityUserManager _userManager; // To find user by username
+        private readonly IdentityRoleManager _roleManager; // To find user by username
+        private readonly IRepository<Volo.Abp.Identity.IdentityRole, Guid> _roleRepository;
 
         public TodoAppService(IRepository<TodoItem, Guid> todoItemRepository,
             TodoItemManager todoItemManager,
@@ -42,7 +46,9 @@ namespace hosamhemaily
             ITodoRepository todoRepository,
             IPermissionManager permissionManager,
             ICurrentUser currentUser,
-            IdentityUserManager userManager)
+            IdentityUserManager userManager,
+            IdentityRoleManager roleManager,
+            IRepository<Volo.Abp.Identity.IdentityRole, Guid> roleRepository)
 
         {
             _todoItemRepository = todoItemRepository;
@@ -52,6 +58,8 @@ namespace hosamhemaily
             _permissionManager = permissionManager;
             _currentUser = currentUser;
             _userManager = userManager;
+            _roleManager = roleManager;
+            _roleRepository = roleRepository;
 
         }
         public async Task<TodoItemDto> CreateAync(string text)
@@ -86,45 +94,13 @@ namespace hosamhemaily
             return true;
         }
 
-        [Authorize]
+        [Authorize(Roles ="admin")]
         public async Task<List<TodoItemDto>> Update()
         {
             var result = await _todoItemRepository.GetListAsync();
             return result.Select(x => new TodoItemDto { Id = x.Id, Text = x.MyText }).ToList();
         }
 
-        public async Task<string> GenerateTokenAsync(string username)
-        {
-            var user = await _userManager.FindByNameAsync(username);
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSuperSecretKeyThatIsLongEnough12345"));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.Name, username),
-        };
-
-            // Adding permission claims
-            var permissions = await _permissionManager.GetAllForUserAsync(Guid.NewGuid());
-            //foreach (var permission in permissions)
-            //{
-               
-            //        claims.Add(new Claim("Permission", permission.Name));
-                
-            //}
-
-            var token = new JwtSecurityToken(
-                issuer: "YourIssuer",
-                audience: "YourAudience",
-                claims: claims,
-                expires: DateTime.Now.AddHours(1),
-                signingCredentials: credentials
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
+        
     }
 }
