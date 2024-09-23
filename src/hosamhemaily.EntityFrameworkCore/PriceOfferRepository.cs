@@ -17,12 +17,17 @@ namespace hosamhemaily
         {
                 _crmServiceBase=crmServiceBase;
         }
-        public Task<Guid> CreateAsync(PriceOffer priceoffer)
+        public async Task<Guid> CreateAsync(PriceOffer priceoffer)
         {
             Entity entity1 = new Entity("vl_pricelistrequest");
             //entity1[""] = priceoffer.AccountTrademark;
-            _crmServiceBase.CrmClient.Create(entity1);
-            throw new NotImplementedException();
+            var guid =  await _crmServiceBase.CrmClient.CreateAsync(entity1);
+            Entity entityPriceListVehicle = new Entity("vl_pricelistvehicle");
+            entityPriceListVehicle["vl_priceid"] = new EntityReference() { Id= guid };
+            entityPriceListVehicle["vl_accounttrademarkspecs"] = new EntityReference() { Id= priceoffer.AccountTrademarkId };
+            var pricevehicleid = await _crmServiceBase.CrmClient.CreateAsync(entityPriceListVehicle);
+
+            return guid;
         }
 
         public Task<List<PriceOffer>> GetAllAsync()
