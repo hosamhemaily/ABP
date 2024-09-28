@@ -21,6 +21,7 @@ using static Volo.Abp.Identity.IdentityPermissions;
 
 namespace hosamhemaily
 {
+    [RemoteService(IsEnabled =false)]
     public class UserManagerAppService : ApplicationService, IUserManagerAppService
     {
         private static int _sessionDuration = 100;
@@ -28,46 +29,55 @@ namespace hosamhemaily
         private IConfiguration _configuration;
 
         private readonly IdentityUserManager _userManager;
+        private readonly IRepository<IdentityRole, Guid> _roleRepository;
 
-        public UserManagerAppService(IdentityUserManager userManager, IConfiguration configuration)
+
+        public UserManagerAppService(IdentityUserManager userManager,
+            IConfiguration configuration,
+            IRepository<IdentityRole, Guid> roleRepository)
         {
             _userManager = userManager;
             _configuration = configuration;
-
+            _roleRepository = roleRepository;
         }
         public async Task<string> CreateTokenAync(LoginDTO dTO)
         {
-            var user =  await _userManager.FindByEmailAsync(dTO.UserName);
-            var resultsignin= await _userManager.CheckPasswordAsync(user, dTO.Password);
-            var userroles =  await _userManager.GetRolesAsync(user);
-            if (!resultsignin)
+
+            //hosamhemaily
+            var user = await _userManager.FindByNameAsync(dTO.UserName);
+            if (user == null)
             {
-                throw new UserFriendlyException("User Cant sign in"); 
+                // User does not exist, throw a custom exception
+                throw new UserFriendlyException("User does not exist", "USER_NOT_FOUND");
             }
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var claims = new List<Claim>  
+            //var roles = _roleManager.Roles.ToList();
+            var roles = await _userManager.GetRolesAsync(user);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSuperSecretKeyThatIsLongEnough12345"));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+
+            var claims = new List<Claim>
             {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Iss, _configuration["Jwt:Issuer"]),
-            new Claim(JwtRegisteredClaimNames.Aud, _configuration["Jwt:audience"]),
-            new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
-        };
-            foreach (var item in userroles)
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, dTO.UserName),
+            };
+
+            foreach (var role in roles)
             {
-                claims.Add(new Claim(ClaimTypes.Role, string.Join(",", item)));
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
+
             var token = new JwtSecurityToken(
-            _configuration["Jwt:Issuer"],
-            _configuration["Jwt:audience"],
-            claims,
-            expires: DateTime.UtcNow.AddMinutes(1),
-            signingCredentials: credentials
-        );
+                issuer: "YourIssuer",
+                audience: "YourAudience",
+                claims: claims,
+                expires: DateTime.Now.AddHours(1),
+                signingCredentials: credentials
+            );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+
+
         }
 
 
